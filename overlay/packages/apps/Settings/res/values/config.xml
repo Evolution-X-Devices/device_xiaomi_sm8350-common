@@ -57,4 +57,7 @@
 
     <!-- Whether to show vendor security patch level -->
     <bool name="config_show_vendor_patch_level" translatable="false">false</bool>
+
+    <!-- Max network scan search time in seconds -->
+    <integer name="config_network_scan_helper_max_search_time_sec">254</integer>
 </resources>
