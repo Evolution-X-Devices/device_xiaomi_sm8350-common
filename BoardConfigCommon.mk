@@ -8,6 +8,10 @@ COMMON_PATH := device/xiaomi/sm8350-common
 
 BOARD_VENDOR := xiaomi
 
+# Ignore overriding commands errors
+BUILD_BROKEN_DUP_RULES := true
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+
 # A/B
 AB_OTA_PARTITIONS += \
     boot \
