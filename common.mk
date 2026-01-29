@@ -135,8 +135,7 @@ PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 # Device-specific settings
 PRODUCT_PACKAGES += \
     DSPVolumeSynchronizer \
-    XiaomiDolby \
-    XiaomiDolbyResCommon \
+    DolbyAtmos \
     XiaomiParts
 
 # Display
