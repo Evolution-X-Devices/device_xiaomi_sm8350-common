@@ -38,9 +38,9 @@ lib_fixups: lib_fixups_user_type = {
     (
         'com.qualcomm.qti.dpm.api@1.0',
         'libmmosal',
-        'vendor.qti.diaghal@1.0',
         'vendor.qti.hardware.wifidisplaysession@1.0',
         'vendor.qti.imsrtpservice@3.0',
+        'vendor.qti.diaghal@1.0',
         'vendor.xiaomi.hardware.misys@1.0',
         'vendor.xiaomi.hardware.misys@2.0',
         'vendor.xiaomi.hardware.misys@3.0',
@@ -49,18 +49,7 @@ lib_fixups: lib_fixups_user_type = {
 }
 
 blob_fixups: blob_fixups_user_type = {
-    'system_ext/bin/wfdservice64': blob_fixup()
-        .add_needed('libwfdservice_shim.so'),
-    'system_ext/etc/init/wfdservice.rc': blob_fixup()
-        .regex_replace(r'(start|stop) wfdservice\b', r'\1 wfdservice64'),
-    'system_ext/lib64/libwfdmmsrc_system.so': blob_fixup()
-        .add_needed('libgui_shim.so'),
-    ('system_ext/lib/libwfdservice.so', 'system_ext/lib64/libwfdservice.so'): blob_fixup()
-        .add_needed('libaudioclient_shim.so')
-        .replace_needed('android.media.audio.common.types-V2-cpp.so', 'android.media.audio.common.types-V4-cpp.so'),
     'system_ext/lib64/libwfdnative.so': blob_fixup()
-        .remove_needed('android.hidl.base@1.0.so')
-        .add_needed('libbinder_shim.so')
         .add_needed('libinput_shim.so'),
     'vendor/etc/init/vendor.xiaomi.hardware.citsensorservice@1.1-service.rc': blob_fixup()
         .add_line_if_missing('    task_profiles ServiceCapacityLow'),
@@ -73,42 +62,11 @@ blob_fixups: blob_fixups_user_type = {
         .add_needed('libcrypto_shim.so'),
     'vendor/lib64/android.hardware.secure_element@1.0-impl.so': blob_fixup()
         .remove_needed('android.hidl.base@1.0.so'),
-    # Dolby START
-    'odm/bin/hw/vendor.dolby_sp.media.c2@1.0-service': blob_fixup()
-        .replace_needed('libcodec2_hidl@1.0.so', 'libcodec2_hidl@1.0_sp.so')
-        .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_sp.so'),
-    'odm/lib64/libcodec2_store_dolby_sp.so': blob_fixup()
-        .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_sp.so'),
-    ('odm/lib64/libcodec2_soft_ac4dec_sp.so', 'odm/lib64/libcodec2_soft_ddpdec_sp.so'): blob_fixup()
-        .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_sp.so')
-        .replace_needed('libcodec2_soft_common.so', 'libcodec2_soft_common_sp.so')
-        .replace_needed('libstagefright_foundation.so', 'libstagefright_foundation-v33.so'),
-    ('odm/lib64/libcodec2_soft_common_sp.so', 'odm/lib64/libcodec2_hidl_plugin_sp.so'): blob_fixup()
-        .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_sp.so')
-        .replace_needed('libstagefright_foundation.so', 'libstagefright_foundation-v33.so'),
-    (
-        'odm/lib/libdlbdsservice_v3_6.so',
-        'odm/lib/libstagefright_soft_ddpdec.so',
-        'odm/lib64/libdlbdsservice_sp.so',
-        'odm/lib64/libdlbdsservice_v3_6.so'
-    ): blob_fixup().replace_needed('libstagefright_foundation.so', 'libstagefright_foundation-v33.so'),
-    'odm/lib64/libcodec2_vndk_sp.so': blob_fixup()
-        .replace_needed('libui.so', 'libui_sp.so')
-        .replace_needed('libstagefright_foundation.so', 'libstagefright_foundation-v33.so'),
-    'odm/lib64/libcodec2_hidl@1.0_sp.so': blob_fixup()
-        .add_needed('libbase_shim.so')
-        .add_needed('dolbycodec_shim.so')
-        .replace_needed('libcodec2_hidl_plugin.so', 'libcodec2_hidl_plugin_sp.so')
-        .replace_needed('libcodec2_vndk.so', 'libcodec2_vndk_sp.so'),
-    'odm/lib64/libui_sp.so': blob_fixup()
-        .replace_needed('android.hardware.graphics.common-V3-ndk.so', 'android.hardware.graphics.common-V5-ndk.so')
-        .replace_needed('android.hardware.graphics.allocator-V1-ndk.so', 'android.hardware.graphics.allocator-V2-ndk.so'),
-    # Dolby END
-    (
-        'vendor/lib64/libdpps.so',
-        'vendor/lib64/libsnapdragoncolor-manager.so',
-    ): blob_fixup()
+    ('vendor/lib64/libdpps.so', 'vendor/lib64/libsnapdragoncolor-manager.so'): blob_fixup()
         .replace_needed('libtinyxml2.so', 'libtinyxml2-v34.so'),
+    'vendor/lib64/libmisight.so': blob_fixup()
+        .add_needed('libjsoncpp_shim.so')
+        .add_needed('libmisightjson_shim.so'),
 }  # fmt: skip
 
 module = ExtractUtilsModule(

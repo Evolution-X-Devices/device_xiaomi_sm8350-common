@@ -31,65 +31,61 @@
 #=============================================================================
 
 function configure_zram_parameters() {
-    local zramSizeGB=$(getprop persist.vendor.zram.size)
-    local zramComp=$(getprop persist.vendor.zram.comp_algorithm)
-    local swappiness=$(getprop persist.vendor.vm.swappiness)
+	MemTotalStr=`cat /proc/meminfo | grep MemTotal`
+	MemTotal=${MemTotalStr:16:8}
 
-    # Set swappiness
-    echo ${swappiness:-60} > /proc/sys/vm/swappiness
+	# Zram disk - 75% for Go and < 2GB devices .
+	# For >2GB Non-Go devices, size = 50% of RAM size. Limit the size to 4GB.
+	# And enable lz4 zram compression for Go targets.
 
-    case "$zramSizeGB" in
-        0)
-            zRamSizeMB=0
-            echo "ZRAM disabled by user choice."
-            return
-            ;;
-        2)
-            zRamSizeMB=2048
-            ;;
-        4)
-            zRamSizeMB=4096
-            ;;
-        8)
-            zRamSizeMB=8192
-            ;;
-        *)
-            # Default dynamic calculation
-            MemTotalStr=$(grep MemTotal /proc/meminfo)
-            MemTotal=${MemTotalStr:16:8}
-            let RamSizeGB="( $MemTotal / 1048576 ) + 1"
-            if [ $RamSizeGB -le 2 ]; then
-                let zRamSizeMB="( $RamSizeGB * 1024 ) * 3 / 4"
-            else
-                let zRamSizeMB="( $RamSizeGB * 1024 ) / 2"
-            fi
-            [ $zRamSizeMB -gt 4096 ] && zRamSizeMB=4096
-            ;;
-    esac
+	let RamSizeGB="( $MemTotal / 1048576 ) + 1"
+	diskSizeUnit=M
+	if [ $RamSizeGB -le 2 ]; then
+		let zRamSizeMB="( $RamSizeGB * 1024 ) * 3 / 4"
+	else
+		let zRamSizeMB="( $RamSizeGB * 1024 ) / 2"
+	fi
 
-    if [ -f /sys/block/zram0/disksize ]; then
-        # Set compression algorithm
-        if [ -n "$zramComp" ] && grep -q "$zramComp" /sys/block/zram0/comp_algorithm; then
-            echo "$zramComp" > /sys/block/zram0/comp_algorithm
-        else
-            echo "lz4" > /sys/block/zram0/comp_algorithm
-        fi
+	# use MB avoid 32 bit overflow
+	if [ $zRamSizeMB -gt 4096 ]; then
+		let zRamSizeMB=4096
+	fi
 
-        if [ -f /sys/block/zram0/use_dedup ]; then
-            echo 1 > /sys/block/zram0/use_dedup
-        fi
-        echo "${zRamSizeMB}M" > /sys/block/zram0/disksize
+	echo lz4 > /sys/block/zram0/comp_algorithm
 
-        if [ -e /sys/kernel/slab/zs_handle ]; then
-            echo 0 > /sys/kernel/slab/zs_handle/store_user
-        fi
-        if [ -e /sys/kernel/slab/zspage ]; then
-            echo 0 > /sys/kernel/slab/zspage/store_user
-        fi
+	if [ -f /sys/block/zram0/disksize ]; then
+		if [ -f /sys/block/zram0/use_dedup ]; then
+			echo 1 > /sys/block/zram0/use_dedup
+		fi
+		echo "$zRamSizeMB""$diskSizeUnit" > /sys/block/zram0/disksize
 
-        mkswap /dev/block/zram0
-        swapon /dev/block/zram0 -p 32758
-    fi
+		# ZRAM may use more memory than it saves if SLAB_STORE_USER
+		# debug option is enabled.
+		if [ -e /sys/kernel/slab/zs_handle ]; then
+			echo 0 > /sys/kernel/slab/zs_handle/store_user
+		fi
+		if [ -e /sys/kernel/slab/zspage ]; then
+			echo 0 > /sys/kernel/slab/zspage/store_user
+		fi
+
+		mkswap /dev/block/zram0
+		swapon /dev/block/zram0 -p 32758
+	fi
+}
+
+function configure_read_ahead_kb_values() {
+	dmpts=$(ls /sys/block/*/queue/read_ahead_kb | grep -e dm -e mmc)
+	ra_kb=128
+
+	if [ -f /sys/block/mmcblk0/bdi/read_ahead_kb ]; then
+		echo $ra_kb > /sys/block/mmcblk0/bdi/read_ahead_kb
+	fi
+	if [ -f /sys/block/mmcblk0rpmb/bdi/read_ahead_kb ]; then
+		echo $ra_kb > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
+	fi
+	for dm in $dmpts; do
+		echo $ra_kb > $dm
+	done
 }
 
 function configure_memory_parameters() {
@@ -113,6 +109,8 @@ function configure_memory_parameters() {
 	#
 
 	configure_zram_parameters
+	configure_read_ahead_kb_values
+	echo 100 > /proc/sys/vm/swappiness
 	echo 1 > /proc/sys/vm/watermark_scale_factor
 
 	# add memory limit to camera cgroup
@@ -180,8 +178,10 @@ echo 10 10 10 10 10 10 10 95 > /proc/sys/kernel/sched_coloc_busy_hyst_cpu_busy_p
 echo 325 > /proc/sys/kernel/walt_low_latency_task_threshold
 
 # cpuset parameters
-echo 0-3 > /dev/cpuset/background/cpus
+echo 0-1 > /dev/cpuset/background/cpus
+echo 0-3 > /dev/cpuset/restricted/cpus
 echo 0-3 > /dev/cpuset/system-background/cpus
+echo 0-6 > /dev/cpuset/foreground/cpus
 
 # configure governor settings for silver cluster
 echo "schedutil" > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
@@ -224,6 +224,18 @@ else
 	echo 1670400 > /sys/devices/system/cpu/cpufreq/policy7/schedutil/hispeed_freq
 fi
 echo 1 > /sys/devices/system/cpu/cpufreq/policy7/schedutil/pl
+
+# Tune DAMON Based Reclaim
+echo Y > /sys/module/damon_reclaim/parameters/enabled
+echo 30000000 > /sys/module/damon_reclaim/parameters/min_age
+echo 0 > /sys/module/damon_reclaim/parameters/quota_ms
+echo 536870912 > /sys/module/damon_reclaim/parameters/quota_sz
+echo 20000000 > /sys/module/damon_reclaim/parameters/wmarks_interval
+echo 700 > /sys/module/damon_reclaim/parameters/wmarks_high
+echo 500 > /sys/module/damon_reclaim/parameters/wmarks_mid
+echo 100 > /sys/module/damon_reclaim/parameters/wmarks_low
+echo 20000 > /sys/module/damon_reclaim/parameters/sample_interval
+echo Y > /sys/module/damon_reclaim/parameters/commit_inputs
 
 # configure bus-dcvs
 for device in /sys/devices/platform/soc

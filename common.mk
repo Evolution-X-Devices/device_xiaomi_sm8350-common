@@ -31,19 +31,30 @@ PRODUCT_PACKAGES += \
     libqcompostprocbundle \
     libqcomvisualizer \
     libqcomvoiceprocessing \
-    libtinycompress \
     libvolumelistener
 
 PRODUCT_PACKAGES += \
     audioadsprpcd \
+    audio.primary.lahaina \
     audio.r_submix.default \
-    audio.usb.default
+    audio.usb.default \
+    sound_trigger.primary.lahaina
 
 PRODUCT_PACKAGES += \
     android.hardware.audio@6.0-impl \
     android.hardware.audio.effect@6.0-impl \
     android.hardware.audio.service \
     android.hardware.soundtrigger@2.3-impl
+
+PRODUCT_PACKAGES += \
+    liba2dpoffload \
+    libbatterylistener \
+    libexthwplugin \
+    libhdmiedid \
+    libhfp \
+    libsndmonitor \
+    libspkrprot \
+    libssrec
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/audio_tuning_mixer.txt:$(TARGET_COPY_OUT_VENDOR)/etc/audio_tuning_mixer.txt
@@ -79,7 +90,7 @@ $(call soong_config_set_bool,android_hardware_audio,skip_speaker_layout_channel_
 AB_OTA_POSTINSTALL_CONFIG += \
     RUN_POSTINSTALL_system=true \
     POSTINSTALL_PATH_system=system/bin/otapreopt_script \
-    FILESYSTEM_TYPE_system=ext4 \
+    FILESYSTEM_TYPE_system=erofs \
     POSTINSTALL_OPTIONAL_system=true
 
 AB_OTA_POSTINSTALL_CONFIG += \
@@ -117,11 +128,7 @@ PRODUCT_PACKAGES += \
     android.hidl.memory@1.0.vendor \
     android.hidl.memory.block@1.0.vendor \
     android.hardware.camera.provider@2.4-impl \
-    android.hardware.camera.provider@2.4-service_64 \
-    android.hardware.graphics.common-V4-ndk
-
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/camera_cnf.txt:$(TARGET_COPY_OUT_VENDOR)/etc/camera/camera_cnf.txt
+    android.hardware.camera.provider@2.4-service_64
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
@@ -129,16 +136,8 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.full.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.full.xml \
     frameworks/native/data/etc/android.hardware.camera.raw.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.raw.xml
 
-$(call soong_config_set,libcameraservice,ext_lib,libcameraservice_extension.xiaomi_sm8350)
-
 # DebugFS
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
-
-# Device-specific settings
-PRODUCT_PACKAGES += \
-    DSPVolumeSynchronizer \
-    DolbyAtmos \
-    XiaomiParts
 
 # Display
 PRODUCT_PACKAGES += \
@@ -150,14 +149,38 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.display.composer-service.xml \
     vendor.qti.hardware.memtrack-service
 
-PRODUCT_PACKAGES += \
-    android.hardware.graphics.allocator@3.0
-
 PRODUCT_COPY_FILES += \
     hardware/qcom-caf/sm8350/display/config/snapdragon_color_libs_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/snapdragon_color_libs_config.xml
 
-# Dolby Vision
-$(call soong_config_set, dolby_vision, enabled, true)
+# Display (MIUI Camera)
+PRODUCT_PACKAGES += \
+    vendor.display.config@1.0 \
+    vendor.display.config@1.0.vendor \
+    vendor.display.config@1.1 \
+    vendor.display.config@1.1.vendor \
+    vendor.display.config@1.2 \
+    vendor.display.config@1.2.vendor \
+    vendor.display.config@1.3 \
+    vendor.display.config@1.3.vendor \
+    vendor.display.config@1.4 \
+    vendor.display.config@1.4.vendor \
+    vendor.display.config@1.5 \
+    vendor.display.config@1.5.vendor \
+    vendor.display.config@1.6 \
+    vendor.display.config@1.6.vendor \
+    vendor.display.config@1.7 \
+    vendor.display.config@1.7.vendor \
+    vendor.display.config@1.8 \
+    vendor.display.config@1.8.vendor
+
+# Dolby
+$(call inherit-product, vendor/xiaomi/dolby/config.mk)
+
+PRODUCT_PACKAGES += \
+    DSPVolumeSynchronizer
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/bin/init.dolby_fix.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.dolby_fix.sh
 
 # DRM
 PRODUCT_PACKAGES += \
@@ -233,8 +256,6 @@ PRODUCT_PACKAGES += \
     android.hardware.health-service.qti
 
 PRODUCT_PACKAGES += \
-    libhidltransport \
-    libhwbinder \
     android.hidl.manager@1.0.vendor
 
 # HotwordEnrollement
@@ -285,8 +306,7 @@ $(call soong_config_set_bool,lineage_health,charging_control_supports_bypass,fal
 # Media
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media/init.qti.media.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.qti.media.sh \
-    $(LOCAL_PATH)/media/init.qti.media.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.qti.media.rc \
-    $(LOCAL_PATH)/media/media_codecs_c2_dolby_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2_dolby_audio.xml
+    $(LOCAL_PATH)/media/init.qti.media.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.qti.media.rc
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media/lahaina/media_codecs_lahaina.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_lahaina.xml \
@@ -302,6 +322,8 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/media/yupik/media_codecs_performance_yupik_v1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance_yupik_v1.xml \
     $(LOCAL_PATH)/media/yupik/media_codecs_yupik_v1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_yupik_v1.xml \
     $(LOCAL_PATH)/media/yupik/media_profiles_yupik_v1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_yupik_v1.xml
+
+$(call soong_config_set_bool,stagefright,target_disable_thumbnail_block_model,true)
 
 # Native libraries whitelist
 PRODUCT_COPY_FILES += \
@@ -332,15 +354,19 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.nxp.mifare.xml
 
 # Overlays
-DEVICE_PACKAGE_OVERLAYS += \
-    $(LOCAL_PATH)/overlay \
-    $(LOCAL_PATH)/overlay-lineage
-
 PRODUCT_ENFORCE_RRO_TARGETS := *
 
 PRODUCT_PACKAGES += \
-    DeviceAsWebcamOverlaySM8350 \
-    NcmTetheringOverlay
+    CarrierConfigOverlaySM8350 \
+    LineageSDKOverlaySM8350 \
+    TelephonyOverlaySM8350
+
+PRODUCT_PACKAGES += \
+    FrameworkOverlaySM8350 \
+    NcmTetheringOverlay \
+    SettingsOverlaySM8350 \
+    SystemUIOverlaySM8350 \
+    WifiOverlaySM8350
 
 # Partitions
 PRODUCT_PACKAGES += \
@@ -357,11 +383,20 @@ PRODUCT_PACKAGES += \
     libqti-perfd-client
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
-    $(LOCAL_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
+    $(LOCAL_PATH)/configs/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json
+
+$(call soong_config_set,power_libperfmgr,mode_extension_lib,//$(LOCAL_PATH):libpowermode-ext-xiaomi)
 
 # PowerShare
+ifeq ($(TARGET_HAS_POWERSHARE),true)
+PRODUCT_PACKAGES += \
+    vendor.lineage.powershare-service.default
+
+PRODUCT_PACKAGES += \
+    LineageSDKOverlayPowerShare
+
 $(call soong_config_set,lineage_powershare,powershare_path,/sys/class/qcom-battery/reverse_chg_mode)
+endif
 
 # QTI
 PRODUCT_COPY_FILES += \
@@ -376,13 +411,13 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     libvndfwk_detect_jni.qti.vendor # Needed by CNE app
 
-# RIL
-PRODUCT_PACKAGES += \
-    CarrierConfigOverlay
-
 # Sensors
 PRODUCT_PACKAGES += \
     android.hardware.sensors-service.xiaomi-multihal
+
+# Shim
+PRODUCT_PACKAGES += \
+    libmisightjson_shim
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
@@ -401,8 +436,8 @@ PRODUCT_SOONG_NAMESPACES += \
     hardware/google/interfaces \
     hardware/google/pixel \
     hardware/lineage/interfaces/power-libperfmgr \
-    hardware/qcom-caf/common/libqti-perfd-client \
-    hardware/xiaomi
+    hardware/xiaomi \
+    hardware/qcom-caf/common/libqti-perfd-client
 
 # Telephony
 PRODUCT_PACKAGES += \
@@ -431,10 +466,6 @@ PRODUCT_COPY_FILES += \
 # Thermal
 PRODUCT_PACKAGES += \
     android.hardware.thermal-service.qti
-
-# TimeKeep
-PRODUCT_PACKAGES += \
-    TimeKeep
 
 # Touchscreen
 PRODUCT_COPY_FILES += \
@@ -497,7 +528,6 @@ PRODUCT_PACKAGES += \
     android.hardware.wifi-service \
     hostapd \
     libwifi-hal-qcom \
-    WifiOverlay \
     wpa_cli \
     wpa_supplicant \
     wpa_supplicant.conf

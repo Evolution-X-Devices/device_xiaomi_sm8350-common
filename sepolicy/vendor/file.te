@@ -1,7 +1,2 @@
-type sysfs_htsr, sysfs_type, fs_type;
-
 # Power HAL
-type vendor_sysfs_msm_subsys, fs_type, sysfs_type;
-
-# Core Control
-type vendor_sysfs_corecontrol, fs_type, sysfs_type;
+type vendor_sysfs_schedutil, sysfs_type, fs_type;

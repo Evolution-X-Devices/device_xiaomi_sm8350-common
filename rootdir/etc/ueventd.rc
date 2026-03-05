@@ -76,7 +76,7 @@ firmware_directories /vendor/firmware_mnt/image/
 # qvr
 /dev/qvr_external_sensor_ioctl      0660  system  system
 /dev/bus/usb/*                      0660  root    usb
-/dev/hidraw*                        0660  system  system
+/dev/hidraw*                        0660  root    usb
 
 # wlan
 /sys/devices/platform/soc/1c00000.qcom,pcie/pci0000:00/0000:00:00.0/0000:01:00.0/net/wlan*/queues/rx-* rps_cpus      0660   system     system
@@ -129,9 +129,6 @@ firmware_directories /vendor/firmware_mnt/image/
 
 /sys/devices/platform/soc/ae00000.qcom,mdss_mdp power/control 0664 system graphics
 
-# KGSL
-/sys/class/kgsl/kgsl-3d0    perfcounter              0660    root    shell
-
 # socinfo
 /sys/devices/soc0           serial_number            0000    root    root
 
@@ -149,8 +146,3 @@ firmware_directories /vendor/firmware_mnt/image/
 
 # Battery
 /sys/class/qcom-battery     reverse_chg_mode            0644    system  system
-
-
-# Torch control
-/sys/devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-02/c440000.qcom,spmi:qcom,pm8350c@2:qcom,flash_led@ee00/leds/led:torch_0 brightness 0660 cameraserver camera
-/sys/devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-02/c440000.qcom,spmi:qcom,pm8350c@2:qcom,flash_led@ee00/leds/led:switch_2 brightness 0660 cameraserver camera

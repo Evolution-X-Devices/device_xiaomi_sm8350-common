@@ -12,7 +12,6 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <fstream>
-#include <mutex>
 #include <thread>
 
 #include "UdfpsHandler.h"
