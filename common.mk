@@ -401,7 +401,8 @@ PRODUCT_COPY_FILES += \
 
 # Sensors
 PRODUCT_PACKAGES += \
-    android.hardware.sensors-service.xiaomi-multihal
+    android.hardware.sensors-service.xiaomi-multihal \
+    sensor-notifier
 
 # Shim
 PRODUCT_PACKAGES += \
